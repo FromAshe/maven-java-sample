@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+        stage('Build') {
+            steps {
+                bat 'mvn compile'
+            }
+        }
+        stage('Test') {
+            steps {
+                bat 'mvn test'
+            }
+        }
+        stage('package') {
+            steps {
+                bat 'mvn package'
+            }
+            post {
+  always {
+    // One or more steps need to be included within each condition's block.
+    junit 'target/surefire-reports/*.xml'
+  }
+  success {
+      archive 'target/*.jar'
+  }
+}
+}
+    
+        stage('Deploy') {
+            steps {
+                withEnv(['JENKINS_NODE_COOKIE=dontKillMe']){
+                bat 'start /min java -jar -DServer.port=8001 target/spring-petclinic-2.3.1.BUILD-SNAPSHOT.jar &'
+            }
+            }
+        }
+    }
+}
